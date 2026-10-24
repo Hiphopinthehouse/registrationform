@@ -515,6 +515,17 @@ function payText(b){
   if(b.mode==='spot') return 'On the spot '+inr(b.amount);
   return 'Online '+inr(b.amount);
 }
+// What the admin recorded (payments / less) shown on the student's device; falls back to the booking-time text
+function liveText(b){
+  const l=b.live; if(!l) return payText(b);
+  let t='Total '+inr(+l.total||0)+' · Paid '+inr(+l.paid||0);
+  if((+l.discount||0)>0) t+=' · Less '+inr(+l.discount);
+  return t+((+l.due||0)>0 ? ' · Balance '+inr(+l.due)+' at venue' : ' · Fully paid');
+}
+function slotLabel(b){
+  const l=b.live; if(l && (+l.due||0)<=0) return 'Paid';
+  return b.mode==='spot' ? 'Booked: pay at venue' : 'Booked';
+}
 function showBooking(){
   const all=store.all(), p=store.pend(), pendOn=!!(p && !campClosed()), btn=$('#mySlotBtn'), box=$('#mybooking');
   const any=all.length>0||pendOn;
@@ -522,9 +533,9 @@ function showBooking(){
   if(!any){box.classList.add('hide');btn.setAttribute('aria-expanded','false');return}
   let h='';
   all.forEach((b,i)=>{
-    h+='<div class="slot"><span class="pill ok">'+(b.mode==='spot'?'Booked: pay at venue':'Booked')+'</span>'
+    h+='<div class="slot"><span class="pill ok">'+slotLabel(b)+'</span>'
       +'<p><b>'+esc(b.name)+'</b> · '+esc(b.id)+'</p>'
-      +'<p>'+(b.type==='camp'?'Camp Registration':'Battle · '+esc(b.category||''))+' · '+esc(payText(b))+'</p>'
+      +'<p>'+(b.type==='camp'?'Camp Registration':'Battle · '+esc(b.category||''))+' · '+esc(liveText(b))+'</p>'
       +'<button type="button" data-dl="'+i+'">Download PDF</button></div>';
   });
   if(pendOn) h+='<div class="slot"><span class="pill">Pending: screenshot not uploaded</span>'
@@ -666,6 +677,32 @@ function prefetchPhone(p){
 document.querySelectorAll('input[type=tel]').forEach(i=>i.addEventListener('input',()=>prefetchPhone(i.value)));
 window.addEventListener('online',flushOutbox);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) flushOutbox(); });
+
+// ---- Live update: what the admin does (payment / less / delete) shows on the student's device ----
+store.save = a => { try{ localStorage.setItem(CFG.key, JSON.stringify(a)) }catch(e){} };
+let mineBusy = false;
+async function syncMine(){
+  if(mineBusy || !hasEndpoint() || document.hidden) return;
+  const waiting = new Set(outbox.get().map(x=>x.id));
+  const ids = store.all().filter(b=>!waiting.has(b.id) && Date.now()-new Date(b.time).getTime()>60000).map(b=>b.id);
+  if(!ids.length) return;
+  mineBusy = true;
+  try{
+    const r = await fetch(CFG.endpoint+'?action=mystatus&ids='+encodeURIComponent(ids.join(',')));
+    const j = await r.json();
+    if(!j || !j.ok) return;
+    const gone = new Set(j.gone||[]), live = j.list||{}, still = new Set(outbox.get().map(x=>x.id));
+    let changed = false;
+    const next = store.all().filter(b=>{ if(gone.has(b.id) && !still.has(b.id)){ changed=true; return false } return true });   // admin deleted it
+    next.forEach(b=>{ const l=live[b.id]; if(l && JSON.stringify(l)!==JSON.stringify(b.live)){ b.live=l; changed=true } });
+    if(changed){ store.save(next); showBooking(); }
+  }catch(e){}
+  finally{ mineBusy = false }
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncMine(); });
+window.addEventListener('online',syncMine);
+$('#mySlotBtn').addEventListener('click',()=>setTimeout(syncMine,0));
+setInterval(syncMine,45000);
 
 // ---- PDF receipt ----
 function logoJpg(){
@@ -870,7 +907,7 @@ function applyCampClosed(){
   $('#hint').textContent = 'Camp registration is closed. Battle registration is open (online until 26 Dec, On the spot only on 27 Dec).';
   pick('battle');
 }
-if(!initClosed()){ applyLock(); refresh(); brefresh(); showBooking(); applyCampClosed(); flushOutbox(); }
+if(!initClosed()){ applyLock(); refresh(); brefresh(); showBooking(); applyCampClosed(); flushOutbox(); syncMine(); }
 </script>
 
 
