@@ -130,6 +130,8 @@ input[type=file]{padding:8px}
 .qr .box{width:min(210px,56vw)!important}
 @media(max-width:350px){.row2{grid-template-columns:1fr}.choose button{font-size:.95rem}}
 .row2 label{overflow-wrap:anywhere}
+/* phones: fields one under another (list style) so long emails don't get cut */
+@media(max-width:700px){.row2{grid-template-columns:1fr}}
 .myslot{display:inline-block;margin-top:12px;font-family:'Permanent Marker',cursive;font-size:1.15rem;background:var(--or);color:#fff;border:0;border-radius:30px;padding:9px 26px;cursor:pointer;box-shadow:0 3px 0 #c24f00}
 .myslot:active{transform:translateY(2px);box-shadow:0 1px 0 #c24f00}
 .slot{padding:10px 0;border-top:1px solid var(--line)}.slot:first-child{border-top:0;padding-top:0}
@@ -606,7 +608,7 @@ function showSuccess(rec,pdf){
   if(rec.balance>0) rows.push(['Balance at venue',inr(rec.balance)]);
   $('#okName').innerHTML='Thank you, <b>'+esc(rec.name)+'</b>';
   $('#okRows').innerHTML=rows.map(r=>'<div class="rw"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join('');
-  $('#okMail').textContent='A confirmation email with your PDF will be sent to '+rec.email+'.';
+  $('#okMail').textContent='A confirmation email will be sent to '+rec.email+'.';
   $('#okHd').querySelectorAll('.cf').forEach(x=>x.remove());
   const cols=['#ffd23f','#ff6a00','#ffffff','#7ee0a0','#ffb020'];
   for(let i=0;i<16;i++){const c=document.createElement('i');c.className='cf';c.style.left=(4+Math.random()*92)+'%';c.style.background=cols[i%cols.length];c.style.animationDelay=(Math.random()*.5)+'s';$('#okHd').appendChild(c)}
