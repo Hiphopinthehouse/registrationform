@@ -365,6 +365,7 @@ const isClosed = () => campClosed() && battleClosed();   // dono band hone par p
 const battleOnlineOpen = () => today() <= CFG.battleOnlineUntil;
 const onlinePrice = () => today() <= CFG.early.until ? CFG.early.price : CFG.late.price;
 const spotPrice = () => today() <= CFG.spot.until ? CFG.spot.before : CFG.spot.after;
+$('#mFees').textContent = 'Camp fees from ' + inr(onlinePrice());   // top chip follows the price (4,999 till 15 Dec, then 6,000)
 const store = {
   all(){try{const a=JSON.parse(localStorage.getItem(CFG.key)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}},
   add(r){try{const a=this.all();a.push(r);localStorage.setItem(CFG.key,JSON.stringify(a))}catch(e){}},
