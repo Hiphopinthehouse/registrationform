@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HHH6 Admin</title>
+<meta name="theme-color" content="#0d0d0f">
+<meta name="robots" content="noindex,nofollow">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HHH6 Admin">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#0d0d0f;--card:#17171b;--card2:#1f1f25;--line:#2c2c34;--ink:#f3efe9;--mute:#9b958e;--or:#ff6a00;
+--amber:#ffb020;--red:#ff5a4f;--green:#2fbf62;--purple:#a77bff;--blue:#4aa8ff;
+--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.4}
+body{min-height:100vh;padding-top:var(--sat);padding-bottom:calc(var(--sab) + 24px)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.hide{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+
+/* login */
+#login{min-height:100vh;display:grid;place-content:center;padding:24px;gap:14px;max-width:380px;margin:0 auto;text-align:center}
+#login img{width:min(260px,70vw);margin:0 auto;filter:drop-shadow(0 0 22px rgba(255,106,0,.3))}
+#login h1{margin:0;font-size:1.2rem;letter-spacing:.04em}
+.in{width:100%;padding:13px 14px;background:var(--card);border:1.5px solid var(--line);border-radius:10px;outline:none}
+.in:focus{border-color:var(--or)}
+.btn{background:var(--or);color:#fff;font-weight:700;padding:13px 16px;border-radius:10px;width:100%;box-shadow:0 3px 0 #b84a00}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #b84a00}
+.btn.ghost{background:var(--card2);box-shadow:none;border:1px solid var(--line);color:var(--ink)}
+.btn.sm{padding:9px 12px;width:auto;font-size:.9rem}
+.err{color:var(--red);min-height:1.2em;font-size:.9rem}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:calc(8px + var(--sat)) 12px 8px;margin-top:calc(-1*var(--sat));background:rgba(13,13,15,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top img{height:34px;width:auto}
+.top .t{flex:1;min-width:0}.top b{display:block;font-size:1rem}
+.sync{font-size:.75rem;color:var(--mute)}
+.sync i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:5px}
+.sync.busy i{background:var(--amber);animation:pulse 1s infinite}.sync.off i{background:var(--red)}
+@keyframes pulse{50%{opacity:.3}}
+.ib{width:40px;height:40px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:1.1rem}
+main{padding:12px;max-width:760px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+
+/* today */
+.today h2{margin:0;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.today input[type=date]{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:4px 8px;color:var(--ink);color-scheme:dark;font-size:.85rem}
+.big{font-size:2.1rem;font-weight:800;color:var(--or);line-height:1.1;margin:6px 0 2px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.mini{background:var(--card2);border-radius:10px;padding:8px 10px}.mini small{display:block;color:var(--mute);font-size:.72rem}.mini b{font-size:1.02rem}
+.meth{color:var(--mute);font-size:.82rem;margin-top:8px}
+.plist{margin-top:10px;border-top:1px solid var(--line)}
+.prow{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.prow small{color:var(--mute)}.prow .amt{font-weight:700}.prow .amt.neg{color:var(--purple)}
+
+/* tabs / filters */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 10px}
+.tabs button{padding:12px 6px;border-radius:12px;background:var(--card);border:1.5px solid var(--line);font-weight:700}
+.tabs button i{font-style:normal;font-weight:500;color:var(--mute);margin-left:4px}
+.tabs button.on{background:var(--or);border-color:var(--or);color:#fff}.tabs button.on i{color:#ffe2cc}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stats div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 8px}.stats small{display:block;color:var(--mute);font-size:.68rem}.stats b{font-size:.92rem}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex:none;padding:7px 12px;border-radius:30px;background:var(--card);border:1px solid var(--line);font-size:.85rem;white-space:nowrap}
+.filters button.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:700}
+.filters button i{font-style:normal;opacity:.7;margin-left:3px}
+
+/* booking cards */
+.bk{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.bk:active{background:var(--card2)}
+.bk .r1{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.bk .nm{font-weight:700;overflow-wrap:anywhere}.bk .sub{color:var(--mute);font-size:.82rem}
+.bk .r2{display:flex;gap:14px;margin-top:7px;font-size:.88rem}.bk .r2 small{color:var(--mute);display:block;font-size:.68rem}
+.badge{flex:none;font-size:.7rem;font-weight:800;padding:3px 9px;border-radius:30px;text-transform:uppercase;letter-spacing:.03em}
+.s-slot{border-left-color:var(--amber)}.s-slot .badge{background:var(--amber);color:#2a1c00}.s-slot{background:linear-gradient(90deg,rgba(255,176,32,.09),var(--card) 55%)}
+.s-due{border-left-color:var(--red)}.s-due .badge{background:var(--red);color:#fff}.s-due{background:linear-gradient(90deg,rgba(255,90,79,.09),var(--card) 55%)}
+.s-partial{border-left-color:var(--blue)}.s-partial .badge{background:var(--blue);color:#001a2e}
+.s-paid{border-left-color:var(--green)}.s-paid .badge{background:var(--green);color:#042010}
+.s-less{border-left-color:var(--purple)}.s-less .badge{background:var(--purple);color:#1a0b3a}.s-less{background:linear-gradient(90deg,rgba(167,123,255,.09),var(--card) 55%)}
+.dueTxt{color:var(--red);font-weight:700}.lessTxt{color:var(--purple);font-weight:700}
+.nt{margin-top:6px;font-size:.8rem;color:var(--amber)}
+.empty{text-align:center;color:var(--mute);padding:30px 0}
+.pend{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-left:5px}
+
+/* detail sheet */
+.back{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:92vh;overflow:auto;background:var(--card);border-radius:18px 18px 0 0;padding:14px 14px calc(18px + var(--sab));max-width:760px;margin:0 auto;border-top:3px solid var(--or);overscroll-behavior:contain}
+.sheet .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px}
+.sheet h3{margin:0;font-size:1.15rem;overflow-wrap:anywhere}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.88rem;margin:8px 0}.kv span{color:var(--mute)}.kv b{font-weight:500;overflow-wrap:anywhere}
+.kv a{color:var(--blue);text-decoration:none}
+.money{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.money div{background:var(--card2);border-radius:10px;padding:8px}.money small{display:block;color:var(--mute);font-size:.68rem}.money b{font-size:1rem}
+.sec{margin-top:14px;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+.pl{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.pl.void{opacity:.45;text-decoration:line-through}
+.pl small{color:var(--mute);display:block}
+.pl .v{color:var(--red);font-size:.78rem;padding:4px 8px;border:1px solid var(--line);border-radius:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips button{padding:6px 11px;border-radius:30px;background:var(--card2);border:1px solid var(--line);font-size:.82rem}
+.row{display:flex;gap:8px}.row>*{min-width:0}
+.shot{max-width:100%;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
+textarea.in{resize:vertical;min-height:54px}
+#toast{position:fixed;left:50%;bottom:calc(20px + var(--sab));transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:30px;font-weight:600;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <img src="logo.png" alt="Hip Hop in the House 6th Edition">
+  <h1>ADMIN PANEL</h1>
+  <input class="in hide" id="lUrl" type="url" placeholder="Google Web app URL (…/exec)" autocomplete="off">
+  <input class="in" id="lPw" type="password" placeholder="Password" autocomplete="current-password">
+  <button class="btn" id="lBtn">Login</button>
+  <div class="err" id="lErr"></div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hide">
+  <div class="top">
+    <img src="logo.png" alt="">
+    <div class="t"><b>HHH6 Admin</b><span class="sync" id="sync"><i></i><span id="syncT">Synced</span></span></div>
+    <button class="ib hide" id="btnInstall" title="Install app">⤓</button>
+    <button class="ib" id="btnSync" title="Sync now">⟳</button>
+    <button class="ib" id="btnOut" title="Logout">⎋</button>
+  </div>
+  <main>
+    <section class="card today" id="today"></section>
+    <div class="tabs">
+      <button data-tab="camp">Camp Registration<i id="nCamp"></i></button>
+      <button data-tab="battle">Battle Registration<i id="nBattle"></i></button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="filters" id="filters"></div>
+    <input class="in" id="q" type="search" placeholder="Search name, phone, ID, note…" style="margin-bottom:10px">
+    <div id="list"></div>
+  </main>
+</div>
+
+<div class="back hide" id="back"></div>
+<div class="sheet hide" id="sheet"></div>
+<div id="toast" class="hide"></div>
+
+<script>
+/* ======================= CONFIG ======================= */
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzgP0dhyEskf9HQsUak-T9YJMp70VCeRxuJIX9fr8p38JWd4CwG3-YEzySnijCFzZ6v/exec';   // Google Apps Script Web app URL (…/exec). Or type it once on the login screen.
+
+/* ======================= helpers ======================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inr = n => '₹' + Math.round(n||0).toLocaleString('en-IN');
+const uid = () => (crypto.randomUUID ? crypto.randomUUID().slice(0,13) : Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+const LS = {
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+const istDay = iso => { const d=new Date(iso); return isNaN(d)?'':new Date(d.getTime()+19800000).toISOString().slice(0,10) };
+const fmt = iso => { const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}) };
+let toastT; function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hide'),2400)}
+
+/* ======================= state ======================= */
+let URL_ = (ENDPOINT.startsWith('https://') ? ENDPOINT : '') || LS.get('adm_url','');
+let token = LS.get('adm_token','');
+let snap = LS.get('adm_snap',{camp:[],battle:[],payments:[],at:''});   // last copy from Google Sheet
+let outbox = LS.get('adm_outbox',[]);                                  // changes not yet confirmed by the sheet
+let tab = LS.get('adm_tab','camp'), filter = 'all', query = '', repDay = '', openId = null, todayOpen = false;
+const shotCache = {};
+
+/* ======================= server ======================= */
+async function api(body){
+  const r = await fetch(URL_,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  return r.json();
+}
+let syncing=false, again=false, netErr=false;
+function setSync(){
+  const el=$('#sync'), t=$('#syncT'); el.classList.remove('busy','off');
+  if(syncing){el.classList.add('busy');t.textContent=outbox.length?'Saving '+outbox.length+'…':'Syncing…'}
+  else if(netErr){el.classList.add('off');t.textContent=outbox.length?'Offline · '+outbox.length+' waiting':'Offline'}
+  else t.textContent = outbox.length ? outbox.length+' waiting' : 'Synced'+(snap.at?' · '+fmt(snap.at):'');
+}
+async function sync(){
+  if(!token||!URL_) return;
+  if(syncing){again=true;return}
+  syncing=true; netErr=false; setSync();
+  try{
+    const sent = outbox.slice();
+    if(sent.length){
+      const r = await api({action:'ops',token,ops:sent});
+      if(!r.ok){ if(r.error==='auth') return logout('Session expired. Login again.'); throw new Error(r.error) }
+      const bad = (r.results||[]).filter(x=>!x.ok);
+      if(bad.length) toast(bad.length+' change(s) failed: '+(bad[0].error||''));
+    }
+    const l = await api({action:'list',token});
+    if(!l.ok){ if(l.error==='auth') return logout('Session expired. Login again.'); throw new Error(l.error) }
+    const ids = new Set(sent.map(o=>o.id));
+    snap = {camp:l.camp,battle:l.battle,payments:l.payments,at:l.now};
+    outbox = outbox.filter(o=>!ids.has(o.id));
+    LS.set('adm_snap',snap); LS.set('adm_outbox',outbox);
+  }catch(e){ netErr=true; console.warn(e) }
+  finally{ syncing=false; setSync(); render(); if(again||(!netErr&&outbox.length)){again=false;setTimeout(sync,netErr?0:200)} }
+}
+function pushOp(op){
+  op.id = uid(); op.time = new Date().toISOString();
+  outbox.push(op); LS.set('adm_outbox',outbox);
+  render(); setSync(); sync();            // local screen updates instantly; sheet updates in background
+}
+
+/* ======================= derive (snapshot + pending changes) ======================= */
+function derive(){
+  const camp=snap.camp.map(r=>({...r,type:'camp'})), battle=snap.battle.map(r=>({...r,type:'battle'}));
+  const pays=snap.payments.map(p=>({...p})), idx={};
+  camp.forEach(r=>idx['camp:'+r.id]=r); battle.forEach(r=>idx['battle:'+r.id]=r);
+  const pendIds=new Set();
+  outbox.forEach(op=>{
+    const b=idx[op.type+':'+op.bid];
+    if(op.op==='pay'||op.op==='disc'){
+      if(pays.some(p=>p.pid===op.id)) return;
+      pays.push({pid:op.id,bid:op.bid,type:op.type,name:b?b.name:'',time:op.time,ts:op.time,amount:op.amount,kind:op.op==='pay'?'pay':'discount',method:op.method||'',note:op.note||'',void:'',pending:true});
+      if(b){ if(op.op==='pay') b.paid+=op.amount; else b.discount+=op.amount; b.pending=true }
+    }else if(op.op==='void'){
+      const p=pays.find(x=>x.pid===op.pid);
+      if(p&&!p.void){ p.void='yes'; if(b){ if(p.kind==='pay') b.paid-=p.amount; else b.discount-=p.amount; b.pending=true } }
+    }else if(op.op==='note'){ if(b){b.note=op.note;b.pending=true} }
+  });
+  [camp,battle].forEach(a=>a.forEach(r=>{ r.due=Math.max(0,r.total-r.paid-r.discount); r.st=stOf(r); }));
+  return {camp,battle,pays,idx};
+}
+function stOf(r){
+  const due=r.total-r.paid-r.discount;
+  if(due<=0) return r.discount>0?'less':'paid';
+  if(r.mode==='slot'&&r.paid>0) return 'slot';
+  if(r.paid>0) return 'partial';
+  return 'due';
+}
+const LBL={slot:'Slot booked',due:'On the spot · due',partial:'Partial',paid:'Paid',less:'Paid · less'};
+const MODE={online:'Online',spot:'On the spot',slot:'Slot booking'};
+
+/* ======================= render ======================= */
+let D=null;
+function render(){
+  if(!token) return;
+  D=derive(); renderToday(); renderTabs(); renderList();
+  if(openId) renderSheet();
+}
+function renderToday(){
+  const day = repDay || istDay(new Date().toISOString());
+  const list = D.pays.filter(p=>!p.void && istDay(p.ts||p.time)===day).sort((a,b)=>String(b.ts||b.time).localeCompare(String(a.ts||a.time)));
+  const pays = list.filter(p=>p.kind==='pay'), discs=list.filter(p=>p.kind==='discount');
+  const sum = a => a.reduce((s,p)=>s+p.amount,0);
+  const camp = sum(pays.filter(p=>p.type==='camp')), bat = sum(pays.filter(p=>p.type==='battle'));
+  const by={}; pays.forEach(p=>{const m=p.method||'other'; by[m]=(by[m]||0)+p.amount});
+  const newC = D.camp.filter(r=>istDay(r.ts)===day).length, newB = D.battle.filter(r=>istDay(r.ts)===day).length;
+  const dueAll = [...D.camp,...D.battle].reduce((s,r)=>s+r.due,0);
+  $('#today').innerHTML =
+    '<h2><span>'+(day===istDay(new Date().toISOString())?'Today':'Report')+' · payment report</span><input type="date" id="repDate" value="'+day+'"></h2>'
+    +'<div class="big num">'+inr(sum(pays))+'</div><div class="sub" style="color:var(--mute);font-size:.82rem">collected in '+pays.length+' payment'+(pays.length===1?'':'s')+'</div>'
+    +'<div class="grid3"><div class="mini"><small>Camp</small><b class="num">'+inr(camp)+'</b></div><div class="mini"><small>Battle</small><b class="num">'+inr(bat)+'</b></div><div class="mini"><small>New regs</small><b class="num">'+newC+' + '+newB+'</b></div></div>'
+    +'<div class="grid3"><div class="mini"><small>Less given</small><b class="num" style="color:var(--purple)">'+inr(sum(discs))+'</b></div><div class="mini"><small>Total due (all)</small><b class="num" style="color:var(--red)">'+inr(dueAll)+'</b></div><div class="mini"><small>Entries</small><b class="num">'+list.length+'</b></div></div>'
+    +(Object.keys(by).length?'<div class="meth">'+Object.keys(by).map(m=>esc(m)+' '+inr(by[m])).join(' · ')+'</div>':'')
+    +'<button class="btn ghost sm" id="tgToday" style="margin-top:10px">'+(todayOpen?'Hide':'Show')+' payments ('+list.length+')</button>'
+    +(todayOpen?'<div class="plist">'+(list.length?list.map(p=>
+      '<div class="prow" data-open="'+esc(p.type+':'+p.bid)+'"><div><b>'+esc(p.name)+'</b><br><small>'+(p.type==='camp'?'Camp':'Battle')+' · '+esc(p.method)+' · '+fmt(p.ts||p.time)+'</small></div><div class="amt num'+(p.kind==='discount'?' neg':'')+'">'+(p.kind==='discount'?'less ':'')+inr(p.amount)+'</div></div>').join(''):'<div class="empty">No payments</div>')+'</div>':'');
+}
+function renderTabs(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  $('#nCamp').textContent=D.camp.length; $('#nBattle').textContent=D.battle.length;
+  const rows=D[tab], sum=k=>rows.reduce((s,r)=>s+r[k],0);
+  $('#stats').innerHTML = '<div><small>Registered</small><b class="num">'+rows.length+'</b></div><div><small>Collected</small><b class="num">'+inr(sum('paid'))+'</b></div><div><small>Due</small><b class="num" style="color:var(--red)">'+inr(sum('due'))+'</b></div><div><small>Less given</small><b class="num" style="color:var(--purple)">'+inr(sum('discount'))+'</b></div>';
+  const cnt={all:rows.length}; ['slot','due','partial','paid','less'].forEach(k=>cnt[k]=rows.filter(r=>r.st===k).length);
+  const F=[['all','All'],['slot','Slot'],['due','On the spot due'],['partial','Partial'],['paid','Paid'],['less','Less / discount']];
+  $('#filters').innerHTML=F.map(([k,l])=>'<button data-f="'+k+'" class="'+(filter===k?'on':'')+'">'+l+'<i>'+cnt[k]+'</i></button>').join('');
+}
+function renderList(){
+  const q=query.trim().toLowerCase();
+  let rows=D[tab].filter(r=>(filter==='all'||r.st===filter)&&(!q||(r.name+' '+r.phone+' '+r.id+' '+r.note+' '+r.city).toLowerCase().includes(q)));
+  rows.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));   // newest booking on top
+  $('#list').innerHTML = rows.length ? rows.map(r=>
+    '<div class="bk s-'+r.st+'" data-open="'+esc(tab+':'+r.id)+'"><div class="r1"><div><div class="nm">'+esc(r.name)+(r.pending?'<span class="pend"></span>':'')+'</div>'
+    +'<div class="sub">'+esc(r.phone)+(r.category?' · '+esc(r.category):'')+' · '+MODE[r.mode]+'</div></div><span class="badge">'+LBL[r.st]+'</span></div>'
+    +'<div class="r2 num"><div><small>Total</small>'+inr(r.total)+'</div><div><small>Paid</small>'+inr(r.paid)+'</div>'
+    +(r.discount>0?'<div><small>Less</small><span class="lessTxt">'+inr(r.discount)+'</span></div>':'')
+    +(r.due>0?'<div><small>Due</small><span class="dueTxt">'+inr(r.due)+'</span></div>':'')+'</div>'
+    +(r.note?'<div class="nt">📝 '+esc(r.note)+'</div>':'')+'</div>').join('')
+    : '<div class="empty">No bookings found</div>';
+}
+
+/* ======================= detail sheet ======================= */
+function openBooking(key){ openId=key; $('#back').classList.remove('hide'); $('#sheet').classList.remove('hide'); renderSheet(true); }
+function closeSheet(){ openId=null; $('#back').classList.add('hide'); $('#sheet').classList.add('hide'); }
+function renderSheet(fresh){
+  const r=D.idx[openId]; if(!r){closeSheet();return}
+  const sh=$('#sheet');
+  // keep what the admin is typing while background sync re-renders
+  const keep={amt:($('#fAmt')||{}).value,met:($('#fMet')||{}).value,note:($('#fNote')||{}).value,nt:($('#fNt')||{}).value,focus:document.activeElement&&document.activeElement.id};
+  const pays=D.pays.filter(p=>p.bid===r.id&&p.type===r.type).sort((a,b)=>String(a.ts||a.time).localeCompare(String(b.ts||b.time)));
+  sh.innerHTML =
+    '<div class="hd"><div><h3>'+esc(r.name)+'</h3><span class="badge s-'+r.st+'" style="display:inline-block;margin-top:4px;font-size:.7rem;font-weight:800;padding:3px 9px;border-radius:30px;background:var(--card2)">'+LBL[r.st]+'</span></div><button class="ib" id="shClose">✕</button></div>'
+    +'<div class="kv"><span>ID</span><b>'+esc(r.id)+'</b><span>Phone</span><b><a href="tel:'+esc(r.phone)+'">'+esc(r.phone)+'</a> · <a href="https://wa.me/91'+esc(r.phone)+'" target="_blank" rel="noopener">WhatsApp</a></b>'
+    +'<span>Email</span><b>'+esc(r.email)+'</b><span>City</span><b>'+esc(r.city||'-')+'</b>'
+    +(r.category?'<span>Category</span><b>'+esc(r.category)+'</b>':'')
+    +'<span>Type</span><b>'+(r.type==='camp'?'Camp':'Battle')+' · '+MODE[r.mode]+'</b><span>Registered</span><b>'+fmt(r.ts)+'</b></div>'
+    +'<div class="money num"><div><small>Total</small><b>'+inr(r.total)+'</b></div><div><small>Paid</small><b>'+inr(r.paid)+'</b></div><div><small>Less</small><b style="color:var(--purple)">'+inr(r.discount)+'</b></div><div><small>Due</small><b style="color:'+(r.due>0?'var(--red)':'var(--green)')+'">'+inr(r.due)+'</b></div></div>'
+    +'<div class="sec">Payment history</div>'
+    +(pays.length?pays.map(p=>'<div class="pl'+(p.void?' void':'')+'"><div><b class="num">'+(p.kind==='discount'?'Less ':'')+inr(p.amount)+'</b><small>'+esc(p.method)+' · '+fmt(p.ts||p.time)+(p.note?' · '+esc(p.note):'')+(p.pending?' · saving…':'')+'</small></div>'+(p.void?'<small>void</small>':'<button class="v" data-void="'+esc(p.pid)+'">Void</button>')+'</div>').join('')
+        :'<div class="sub" style="color:var(--mute);padding:6px 0">No payment yet</div>')
+    +(r.shot==='Yes'?'<button class="btn ghost sm" id="btnShot" style="margin-top:10px">View payment screenshot</button><div id="shotBox"></div>':'')
+    +(r.due>0?
+      '<div class="sec">Receive payment</div>'
+      +'<div class="chips"><button data-fill="'+r.due+'">Full '+inr(r.due)+'</button>'+(r.mode==='slot'||r.mode==='spot'?'':'')+'</div>'
+      +'<div class="row"><input class="in" id="fAmt" type="number" inputmode="numeric" min="1" placeholder="Amount ₹" style="flex:1.2"><select class="in" id="fMet" style="flex:1"><option>cash</option><option>upi</option><option>other</option></select></div>'
+      +'<input class="in" id="fNote" placeholder="Payment note (optional)" style="margin-top:8px">'
+      +'<div id="fHint" style="color:var(--mute);font-size:.82rem;margin:8px 0 2px"></div>'
+      +'<div class="row" style="margin-top:6px"><button class="btn" id="btnPay">Add payment</button></div>'
+      +'<div class="row" style="margin-top:8px"><button class="btn ghost" id="btnLess">Accept less &amp; close</button></div>'
+     :'<div class="sec">Fully settled</div>')
+    +'<div class="sec">Admin note (e.g. known person / reason for less)</div>'
+    +'<textarea class="in" id="fNt" placeholder="Write a note…">'+esc(r.note)+'</textarea>'
+    +'<div class="row" style="margin-top:8px"><button class="btn ghost sm" id="btnNote">Save note</button></div>';
+  // restore typing
+  if(!fresh){ if(keep.amt!=null&&$('#fAmt')) $('#fAmt').value=keep.amt; if(keep.met&&$('#fMet')) $('#fMet').value=keep.met; if(keep.note!=null&&$('#fNote')) $('#fNote').value=keep.note;
+    if(keep.nt!=null&&$('#fNt')&&keep.focus==='fNt') $('#fNt').value=keep.nt; if(keep.focus&&$('#'+keep.focus)) $('#'+keep.focus).focus(); }
+  hint();
+}
+function hint(){
+  const r=D.idx[openId]; if(!r||!$('#fHint')) return;
+  const a=Number($('#fAmt').value)||0, due=r.due;
+  $('#btnLess').classList.toggle('hide',!(a>0&&a<due));
+  $('#btnLess').textContent = 'Accept '+inr(a)+' & close (less '+inr(due-a)+')';
+  $('#fHint').textContent = a>due ? 'Amount is more than due ('+inr(due)+')' : a>0&&a<due ? 'Remaining after this: '+inr(due-a)+' · or close with less' : '';
+}
+
+/* ======================= events ======================= */
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('button,[data-open]'); if(!t) return;
+  if(t.dataset.tab){ tab=t.dataset.tab; LS.set('adm_tab',tab); filter='all'; render(); return }
+  if(t.dataset.f){ filter=t.dataset.f; render(); return }
+  if(t.dataset.open){ openBooking(t.dataset.open); return }
+  if(t.id==='tgToday'){ todayOpen=!todayOpen; renderToday(); return }
+  if(t.id==='shClose'||t.id==='back'){ closeSheet(); return }
+  if(t.dataset.fill){ $('#fAmt').value=t.dataset.fill; hint(); return }
+  const r=openId&&D.idx[openId];
+  if(t.dataset.void&&r){ if(confirm('Void this payment entry?')) pushOp({op:'void',pid:t.dataset.void,bid:r.id,type:r.type}); return }
+  if(t.id==='btnPay'&&r){
+    const a=Math.round(Number($('#fAmt').value)||0);
+    if(a<=0) return toast('Enter amount');
+    if(a>r.due) return toast('More than due ('+inr(r.due)+')');
+    pushOp({op:'pay',bid:r.id,type:r.type,amount:a,method:$('#fMet').value,note:$('#fNote').value.trim()});
+    toast('Payment added '+inr(a)); return
+  }
+  if(t.id==='btnLess'&&r){
+    const a=Math.round(Number($('#fAmt').value)||0), less=r.due-a;
+    if(a<=0||less<=0) return;
+    pushOp({op:'pay',bid:r.id,type:r.type,amount:a,method:$('#fMet').value,note:$('#fNote').value.trim()});
+    pushOp({op:'disc',bid:r.id,type:r.type,amount:less,method:'less',note:'Accepted '+inr(a)+' instead of '+inr(r.due)});
+    toast('Closed · less '+inr(less)); return
+  }
+  if(t.id==='btnNote'&&r){ pushOp({op:'note',bid:r.id,type:r.type,note:$('#fNt').value.trim()}); toast('Note saved'); return }
+  if(t.id==='btnShot'&&r){
+    const box=$('#shotBox'); box.innerHTML='<div class="sub" style="color:var(--mute);margin-top:8px">Loading…</div>';
+    try{
+      if(!shotCache[r.id]){ const x=await api({action:'shot',token,id:r.id}); if(!x.ok) throw new Error(x.error); shotCache[r.id]=x.dataUrl }
+      box.innerHTML = shotCache[r.id] ? '<img class="shot" src="'+shotCache[r.id]+'" alt="payment screenshot">' : '<div class="sub" style="color:var(--mute);margin-top:8px">No screenshot saved</div>';
+    }catch(err){ box.innerHTML='<div class="err">Could not load (check internet)</div>' }
+    return
+  }
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'){ query=e.target.value; renderList() }
+  if(e.target.id==='fAmt') hint();
+});
+document.addEventListener('change',e=>{ if(e.target.id==='repDate'){ repDay=e.target.value; renderToday() } });
+$('#back').addEventListener('click',closeSheet);
+$('#btnSync').addEventListener('click',()=>{ sync(); toast('Syncing…') });
+$('#btnOut').addEventListener('click',()=>{ if(!outbox.length||confirm(outbox.length+' change(s) not yet saved to the sheet. Logout anyway?')) logout() });
+
+/* ======================= login ======================= */
+if(!URL_) $('#lUrl').classList.remove('hide');
+async function login(){
+  const pw=$('#lPw').value, u=($('#lUrl').value||'').trim()||URL_;
+  if(!/^https:\/\//.test(u)) return $('#lErr').textContent='Enter the Google Web app URL first.';
+  if(!pw) return $('#lErr').textContent='Enter password.';
+  $('#lErr').textContent=''; $('#lBtn').textContent='Checking…'; $('#lBtn').disabled=true;
+  try{
+    URL_=u;
+    const r=await api({action:'login',password:pw});
+    if(!r.ok) throw new Error(r.error||'Login failed');
+    token=r.token; LS.set('adm_token',token); LS.set('adm_url',URL_);
+    $('#lPw').value=''; start();
+  }catch(e){ $('#lErr').textContent = /Wrong/.test(e.message)?'Wrong password':'Could not connect. Check internet / URL.' }
+  finally{ $('#lBtn').textContent='Login'; $('#lBtn').disabled=false }
+}
+$('#lBtn').addEventListener('click',login);
+$('#lPw').addEventListener('keydown',e=>{ if(e.key==='Enter') login() });
+function logout(msg){
+  token=''; LS.del('adm_token'); closeSheet();
+  $('#app').classList.add('hide'); $('#login').classList.remove('hide'); $('#lErr').textContent=msg||'';
+}
+function start(){
+  $('#login').classList.add('hide'); $('#app').classList.remove('hide');
+  render(); setSync(); sync();
+}
+if(token) start();
+setInterval(()=>{ if(token&&!document.hidden) sync() },20000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&token) sync() });
+window.addEventListener('online',()=>sync());
+window.addEventListener('offline',()=>{netErr=true;setSync()});
+
+/* ======================= PWA ======================= */
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferred=e; $('#btnInstall').classList.remove('hide') });
+$('#btnInstall').addEventListener('click',async()=>{ if(!deferred) return; deferred.prompt(); await deferred.userChoice; deferred=null; $('#btnInstall').classList.add('hide') });
+</script>
+</body>
+</html>
