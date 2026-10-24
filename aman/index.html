@@ -26,7 +26,7 @@ button{cursor:pointer;border:0;background:none}
 .num{font-variant-numeric:tabular-nums}
 
 /* login */
-#login{min-height:100vh;display:grid;place-content:center;padding:24px;gap:14px;max-width:380px;margin:0 auto;text-align:center}
+#login{min-height:100vh;min-height:100dvh;display:grid;place-content:center;padding:24px;gap:14px;max-width:380px;margin:0 auto;text-align:center}
 #login img{width:min(260px,70vw);margin:0 auto;filter:drop-shadow(0 0 22px rgba(255,106,0,.3))}
 #login h1{margin:0;font-size:1.2rem;letter-spacing:.04em}
 .in{width:100%;padding:13px 14px;background:var(--card);border:1.5px solid var(--line);border-radius:10px;outline:none}
@@ -109,6 +109,38 @@ main{padding:12px;max-width:760px;margin:0 auto}
 .shot{max-width:100%;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
 textarea.in{resize:vertical;min-height:54px}
 #toast{position:fixed;left:50%;bottom:calc(20px + var(--sab));transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:30px;font-weight:600;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+/* ---- mobile friendly (phones) ---- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body.lock{overflow:hidden}
+.in,select.in,textarea.in,.today input[type=date]{font-size:16px}           /* 16px = iPhone does not zoom in on tap */
+.in{min-height:46px}
+.top{padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px))}
+main{padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px))}
+.top b,.sync{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{width:44px;height:44px;flex:none}
+.today h2{flex-wrap:wrap}
+.today input[type=date]{min-height:40px}
+.tabs button{min-height:48px;line-height:1.25}
+.filters button{min-height:40px;padding:8px 14px}
+.chips button{min-height:42px;padding:8px 14px}
+.btn{min-height:48px}
+.btn.sm{min-height:44px}
+.pl .v{min-height:40px;padding:8px 12px}
+.bk{padding:12px}
+.bk .r1>div:first-child{min-width:0}
+.bk .r2{flex-wrap:wrap;gap:6px 16px}
+.sheet{max-height:92vh;max-height:92dvh;-webkit-overflow-scrolling:touch}
+.sheet .hd{position:sticky;top:0;z-index:3;background:var(--card);margin:-14px -14px 8px;padding:14px 14px 8px}
+.shot{width:100%;height:auto}
+@media(max-width:440px){
+  .stats{grid-template-columns:1fr 1fr}
+  .money{grid-template-columns:1fr 1fr}
+  .big{font-size:1.9rem}
+  .grid3{gap:6px}
+  .mini{padding:8px}
+  .kv{font-size:.92rem}
+}
+@media(max-width:340px){.grid3{grid-template-columns:1fr 1fr}.tabs button{font-size:.88rem}}
 </style>
 </head>
 <body>
@@ -294,8 +326,8 @@ function renderList(){
 }
 
 /* ======================= detail sheet ======================= */
-function openBooking(key){ openId=key; $('#back').classList.remove('hide'); $('#sheet').classList.remove('hide'); renderSheet(true); }
-function closeSheet(){ openId=null; $('#back').classList.add('hide'); $('#sheet').classList.add('hide'); }
+function openBooking(key){ openId=key; $('#back').classList.remove('hide'); $('#sheet').classList.remove('hide'); document.body.classList.add('lock'); renderSheet(true); }
+function closeSheet(){ openId=null; $('#back').classList.add('hide'); $('#sheet').classList.add('hide'); document.body.classList.remove('lock'); }
 function renderSheet(fresh){
   const r=D.idx[openId]; if(!r){closeSheet();return}
   const sh=$('#sheet');
