@@ -109,6 +109,11 @@ main{padding:12px;max-width:760px;margin:0 auto}
 .shot{max-width:100%;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
 textarea.in{resize:vertical;min-height:54px}
 #toast{position:fixed;left:50%;bottom:calc(20px + var(--sab));transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:30px;font-weight:600;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+/* ---- delete ---- */
+.bk{position:relative}
+.bk .r2,.bk .nt{padding-right:54px}
+.bk .del{position:absolute;right:8px;bottom:8px;width:44px;height:44px;border-radius:10px;background:rgba(255,90,79,.12);border:1px solid rgba(255,90,79,.4);font-size:1.05rem;line-height:1}
+.btn.danger{background:transparent;color:var(--red);border:1.5px solid var(--red);box-shadow:none}
 /* ---- mobile friendly (phones) ---- */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body.lock{overflow:hidden}
@@ -248,10 +253,10 @@ function pushOp(op){
 
 /* ======================= derive (snapshot + pending changes) ======================= */
 function derive(){
-  const camp=snap.camp.map(r=>({...r,type:'camp'})), battle=snap.battle.map(r=>({...r,type:'battle'}));
-  const pays=snap.payments.map(p=>({...p})), idx={};
+  let camp=snap.camp.map(r=>({...r,type:'camp'})), battle=snap.battle.map(r=>({...r,type:'battle'}));
+  let pays=snap.payments.map(p=>({...p})); const idx={};
   camp.forEach(r=>idx['camp:'+r.id]=r); battle.forEach(r=>idx['battle:'+r.id]=r);
-  const pendIds=new Set();
+  const pendIds=new Set(), dels=new Set();
   outbox.forEach(op=>{
     const b=idx[op.type+':'+op.bid];
     if(op.op==='pay'||op.op==='disc'){
@@ -262,7 +267,12 @@ function derive(){
       const p=pays.find(x=>x.pid===op.pid);
       if(p&&!p.void){ p.void='yes'; if(b){ if(p.kind==='pay') b.paid-=p.amount; else b.discount-=p.amount; b.pending=true } }
     }else if(op.op==='note'){ if(b){b.note=op.note;b.pending=true} }
+    else if(op.op==='del'){ dels.add(op.type+':'+op.bid) }
   });
+  if(dels.size){   // deleted bookings vanish instantly on screen, before the sheet confirms
+    camp=camp.filter(r=>!dels.has('camp:'+r.id)); battle=battle.filter(r=>!dels.has('battle:'+r.id));
+    pays=pays.filter(p=>!dels.has(p.type+':'+p.bid)); dels.forEach(k=>{ delete idx[k] });
+  }
   [camp,battle].forEach(a=>a.forEach(r=>{ r.due=Math.max(0,r.total-r.paid-r.discount); r.st=stOf(r); }));
   return {camp,battle,pays,idx};
 }
@@ -321,7 +331,7 @@ function renderList(){
     +'<div class="r2 num"><div><small>Total</small>'+inr(r.total)+'</div><div><small>Paid</small>'+inr(r.paid)+'</div>'
     +(r.discount>0?'<div><small>Less</small><span class="lessTxt">'+inr(r.discount)+'</span></div>':'')
     +(r.due>0?'<div><small>Due</small><span class="dueTxt">'+inr(r.due)+'</span></div>':'')+'</div>'
-    +(r.note?'<div class="nt">📝 '+esc(r.note)+'</div>':'')+'</div>').join('')
+    +(r.note?'<div class="nt">📝 '+esc(r.note)+'</div>':'')+'<button class="del" data-del="'+esc(tab+':'+r.id)+'" aria-label="Delete booking">🗑</button></div>').join('')
     : '<div class="empty">No bookings found</div>';
 }
 
@@ -340,7 +350,7 @@ function renderSheet(fresh){
     +'<span>Email</span><b>'+esc(r.email)+'</b><span>City</span><b>'+esc(r.city||'-')+'</b>'
     +(r.category?'<span>Category</span><b>'+esc(r.category)+'</b>':'')
     +'<span>Type</span><b>'+(r.type==='camp'?'Camp':'Battle')+' · '+MODE[r.mode]+'</b><span>Registered</span><b>'+fmt(r.ts)+'</b></div>'
-    +'<div class="money num"><div><small>Total</small><b>'+inr(r.total)+'</b></div><div><small>Paid</small><b>'+inr(r.paid)+'</b></div><div><small>Less</small><b style="color:var(--purple)">'+inr(r.discount)+'</b></div><div><small>Due</small><b style="color:'+(r.due>0?'var(--red)':'var(--green)')+'">'+inr(r.due)+'</b></div></div>'
+    +'<div class="money num"><div><small>Total</small><b>'+inr(r.total)+'</b></div><div><small>Paid</small><b>'+inr(r.paid)+'</b></div><div><small>Less (discount)</small><b style="color:var(--purple)">'+inr(r.discount)+'</b></div><div><small>Due</small><b style="color:'+(r.due>0?'var(--red)':'var(--green)')+'">'+inr(r.due)+'</b></div></div>'
     +'<div class="sec">Payment history</div>'
     +(pays.length?pays.map(p=>'<div class="pl'+(p.void?' void':'')+'"><div><b class="num">'+(p.kind==='discount'?'Less ':'')+inr(p.amount)+'</b><small>'+esc(p.method)+' · '+fmt(p.ts||p.time)+(p.note?' · '+esc(p.note):'')+(p.pending?' · saving…':'')+'</small></div>'+(p.void?'<small>void</small>':'<button class="v" data-void="'+esc(p.pid)+'">Void</button>')+'</div>').join('')
         :'<div class="sub" style="color:var(--mute);padding:6px 0">No payment yet</div>')
@@ -356,7 +366,8 @@ function renderSheet(fresh){
      :'<div class="sec">Fully settled</div>')
     +'<div class="sec">Admin note (e.g. known person / reason for less)</div>'
     +'<textarea class="in" id="fNt" placeholder="Write a note…">'+esc(r.note)+'</textarea>'
-    +'<div class="row" style="margin-top:8px"><button class="btn ghost sm" id="btnNote">Save note</button></div>';
+    +'<div class="row" style="margin-top:8px"><button class="btn ghost sm" id="btnNote">Save note</button></div>'
+    +'<div class="sec">Danger zone</div><div class="row" style="margin-top:6px"><button class="btn danger" id="btnDel">Delete this booking</button></div>';
   // restore typing
   if(!fresh){ if(keep.amt!=null&&$('#fAmt')) $('#fAmt').value=keep.amt; if(keep.met&&$('#fMet')) $('#fMet').value=keep.met; if(keep.note!=null&&$('#fNote')) $('#fNote').value=keep.note;
     if(keep.nt!=null&&$('#fNt')&&keep.focus==='fNt') $('#fNt').value=keep.nt; if(keep.focus&&$('#'+keep.focus)) $('#'+keep.focus).focus(); }
@@ -370,14 +381,23 @@ function hint(){
   $('#fHint').textContent = a>due ? 'Amount is more than due ('+inr(due)+')' : a>0&&a<due ? 'Remaining after this: '+inr(due-a)+' · or close with less' : '';
 }
 
+function delBooking(key){
+  const r=D&&D.idx[key]; if(!r) return;
+  const msg='Delete "'+r.name+'" ('+r.id+')?\n\nThis removes the booking'+(r.paid>0?', its payments ('+inr(r.paid)+' collected)':'')+' and screenshot from the Google Sheet. It will also disappear from the student\'s My Slot.\n\nThis cannot be undone.';
+  if(!confirm(msg)) return;
+  pushOp({op:'del',bid:r.id,type:r.type}); toast('Booking deleted');
+}
+
 /* ======================= events ======================= */
 document.addEventListener('click',async e=>{
   const t=e.target.closest('button,[data-open]'); if(!t) return;
   if(t.dataset.tab){ tab=t.dataset.tab; LS.set('adm_tab',tab); filter='all'; render(); return }
   if(t.dataset.f){ filter=t.dataset.f; render(); return }
+  if(t.dataset.del){ delBooking(t.dataset.del); return }
   if(t.dataset.open){ openBooking(t.dataset.open); return }
   if(t.id==='tgToday'){ todayOpen=!todayOpen; renderToday(); return }
   if(t.id==='shClose'||t.id==='back'){ closeSheet(); return }
+  if(t.id==='btnDel'&&openId){ delBooking(openId); return }
   if(t.dataset.fill){ $('#fAmt').value=t.dataset.fill; hint(); return }
   const r=openId&&D.idx[openId];
   if(t.dataset.void&&r){ if(confirm('Void this payment entry?')) pushOp({op:'void',pid:t.dataset.void,bid:r.id,type:r.type}); return }
