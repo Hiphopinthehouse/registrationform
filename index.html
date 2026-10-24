@@ -77,11 +77,15 @@ html.intro-on .wrap{opacity:0;animation:fsw 0s 8s forwards}
 @keyframes fsw{to{opacity:1}}
 #intro{position:fixed;inset:0;z-index:9999;background:#0d0d0f var(--wall) center/cover no-repeat;overflow:hidden;cursor:pointer;animation:fsi 0s 8s forwards}
 @keyframes fsi{to{opacity:0;visibility:hidden}}
-#introZoom{position:absolute;will-change:transform}
-#introPoster{position:absolute;inset:0;background:#f4f4f6;display:grid;place-items:center;animation:ipop .4s cubic-bezier(.2,1.35,.4,1) .05s both;box-shadow:0 6px 24px rgba(0,0,0,.45)}
-#introPoster img{width:84%;height:auto;transition:opacity .4s ease}
-#introPoster.fade img{opacity:0}
-@keyframes ipop{from{transform:scale(.35);opacity:0}to{transform:scale(1);opacity:1}}
+#introDoor{position:absolute;perspective:1400px}
+#introInside{position:absolute;inset:0;opacity:0;transition:opacity .6s ease .1s;background:radial-gradient(ellipse at 50% 55%,#6a3a12 0%,#1c1008 45%,#050507 100%);box-shadow:inset 0 0 40px #000}
+#intro.open #introInside{opacity:1}
+.leaf{position:absolute;top:0;bottom:0;width:50.2%;background-image:var(--wall);background-repeat:no-repeat;backface-visibility:hidden;transition:transform 1.2s cubic-bezier(.55,0,.25,1),filter 1.2s ease;box-shadow:inset 0 0 0 1px rgba(0,0,0,.55),inset 0 0 24px rgba(0,0,0,.55)}
+#leafL{left:0;transform-origin:0 50%}
+#leafR{right:0;transform-origin:100% 50%}
+#intro.open #leafL{transform:rotateY(112deg);filter:brightness(.5)}
+#intro.open #leafR{transform:rotateY(-112deg);filter:brightness(.5)}
+#introLogo{position:fixed;z-index:2;left:0;top:0;pointer-events:none;opacity:0;will-change:transform,opacity;filter:drop-shadow(0 0 28px rgba(255,106,0,.55)) drop-shadow(0 8px 14px rgba(0,0,0,.6))}
 @media(prefers-reduced-motion:reduce){#intro{display:none}html.intro-on .wrap{opacity:1}}
 .qr .box{width:min(300px,82vw)!important;height:auto!important;padding:0!important;background:transparent!important;box-shadow:none!important;overflow:visible}.qr .box img{width:100%;height:auto;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
 .opts .wide{grid-column:1/-1}
@@ -168,7 +172,14 @@ html.closed #mySlotBtn{display:none!important}
 <script>document.documentElement.classList.add("intro-on")</script>
 </head>
 <body>
-<div id="intro" aria-hidden="true"><div id="introZoom"><div id="introPoster"><img id="introLogo" alt=""></div></div></div>
+<div id="intro" aria-hidden="true">
+  <div id="introDoor">
+    <div id="introInside"></div>
+    <div class="leaf" id="leafL"></div>
+    <div class="leaf" id="leafR"></div>
+  </div>
+  <img id="introLogo" alt="">
+</div>
 <div class="wrap">
 <header>
   <h1 class="sr">Hip Hop in the House 6th Edition</h1>
@@ -915,38 +926,58 @@ if(!initClosed()){ applyLock(); refresh(); brefresh(); showBooking(); applyCampC
 (function(){
   var root=document.documentElement, ov=document.getElementById('intro');
   if(!ov) return;
+  var done=false;
   function finish(){
-    if(finish.d) return; finish.d=1;
-    ov.style.transition='opacity .4s ease'; ov.style.opacity='0';
+    if(done) return; done=true;
+    ov.style.transition='opacity .45s ease'; ov.style.opacity='0';
     root.classList.remove('intro-on');
-    setTimeout(function(){ov.remove()},500);
+    setTimeout(function(){ov.remove()},550);
   }
   if(matchMedia('(prefers-reduced-motion:reduce)').matches){ov.remove();root.classList.remove('intro-on');return}
-  var zm=document.getElementById('introZoom'), po=document.getElementById('introPoster'),
-      lg=document.getElementById('introLogo'), hdr=document.querySelector('.logo');
-  if(hdr) lg.src=hdr.src;
-  var IW=667, IH=1000, PX=216, PY=272, PW=227, PH=341, z={};
+
+  var door=document.getElementById('introDoor'), L=document.getElementById('leafL'),
+      R=document.getElementById('leafR'), lg=document.getElementById('introLogo'),
+      hdr=document.querySelector('.logo');
+  lg.src=hdr.src;
+
+  var IW=667, IH=1000, PX=216, PY=272, PW=227, PH=341, cx=0, cy=0;
   function layout(){
     var vw=innerWidth, vh=innerHeight, c=Math.max(vw/IW,vh/IH),
         l=(vw-IW*c)/2, t=(vh-IH*c)/2,
-        x=l+PX*c-1, y=t+PY*c-1, w=PW*c+2, h=PH*c+2;
-    zm.style.left=x+'px'; zm.style.top=y+'px'; zm.style.width=w+'px'; zm.style.height=h+'px';
-    z.s=Math.max(vw/w,vh/h)*1.06;
-    z.dx=vw/2-(x+w/2); z.dy=vh/2-(y+h/2);
+        x=l+PX*c, y=t+PY*c, w=PW*c, h=PH*c;
+    door.style.left=x+'px'; door.style.top=y+'px'; door.style.width=w+'px'; door.style.height=h+'px';
+    [[L,0],[R,w*0.498]].forEach(function(p){
+      var leaf=p[0], lx=x+p[1];
+      leaf.style.backgroundSize=(IW*c)+'px '+(IH*c)+'px';
+      leaf.style.backgroundPosition=(l-lx)+'px '+(t-y)+'px';
+    });
+    cx=x+w/2; cy=(Math.max(y,0)+Math.min(y+h,vh))/2;
   }
   layout();
+  addEventListener('resize',layout);
+
   var started=false;
   function go(){
     if(started) return; started=true;
+    layout();
+    var r=hdr.getBoundingClientRect();
+    lg.style.left=r.left+'px'; lg.style.top=r.top+'px';
+    lg.style.width=r.width+'px'; lg.style.height=r.height+'px';
+    var dx=cx-(r.left+r.width/2), dy=cy-(r.top+r.height/2);
+    ov.classList.add('open');
     setTimeout(function(){
-      zm.style.transition='transform .85s cubic-bezier(.6,0,.2,1)';
-      zm.style.transform='translate('+z.dx+'px,'+z.dy+'px) scale('+z.s+')';
-      setTimeout(function(){po.classList.add('fade')},350);
-      setTimeout(finish,760);
-    },450);
+      if(!lg.animate){ lg.style.opacity=1; return setTimeout(finish,900); }
+      var a=lg.animate([
+        {opacity:0,transform:'translate('+dx+'px,'+dy+'px) scale(.12)'},
+        {opacity:1,transform:'translate('+dx+'px,'+dy+'px) scale(.5)',offset:.35},
+        {opacity:1,transform:'translate(0,0) scale(1)'}
+      ],{duration:1700,easing:'cubic-bezier(.3,.1,.2,1)',fill:'forwards'});
+      a.onfinish=function(){ setTimeout(finish,250) };
+    },650);
   }
   ov.addEventListener('click',finish);
-  setTimeout(go,60);
+  function start(){ setTimeout(go,300) }
+  if(hdr.complete) start(); else { hdr.addEventListener('load',start); setTimeout(start,1500); }
 })();
 </script>
 </body>
