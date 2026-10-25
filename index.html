@@ -199,7 +199,7 @@ html.closed #mySlotBtn{display:none!important}
   <h2>What do you want?</h2>
   <div class="choose">
     <button type="button" data-t="camp" aria-pressed="false">Camp Registration</button>
-    <button type="button" data-t="battle" aria-pressed="false">Battle</button>
+    <button type="button" data-t="battle" aria-pressed="false">Battle Registration</button>
   </div>
   <p class="no" id="hint">Camp and Battle have separate registrations. Registering for the Camp does not give you entry to the Battle.</p>
 </section>
@@ -620,7 +620,6 @@ function clearForms(){
 function finish(rec){
   showBooking();
   const pdf = buildPdf(rec);                       // null if the PDF library could not load
-  if(pdf) autoDownload(pdf);                       // direct download, the PDF is not opened
   queueSend(pdf ? {...rec, pdf:pdf.b64} : rec);    // Google Sheet + confirmation emails (with PDF) in the background
   showSuccess(rec,pdf);
 }
