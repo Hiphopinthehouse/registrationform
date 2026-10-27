@@ -619,8 +619,11 @@ function clearForms(){
 
 function finish(rec){
   showBooking();
-  const pdf = buildPdf(rec);                       // null if the PDF library could not load
-  queueSend(pdf ? {...rec, pdf:pdf.b64} : rec);    // Google Sheet + confirmation emails (with PDF) in the background
+  // 1) light PDF for the email, sent immediately on submit (no waiting for the pop-up / Done button)
+  const mailPdf = buildPdf(rec,true);
+  queueSend(mailPdf ? {...rec, pdf:mailPdf.b64} : rec);
+  // 2) full-quality PDF for the user's own download
+  const pdf = buildPdf(rec);
   showSuccess(rec,pdf);
 }
 
@@ -715,19 +718,19 @@ $('#mySlotBtn').addEventListener('click',()=>setTimeout(syncMine,0));
 setInterval(syncMine,45000);
 
 // ---- PDF receipt ----
-function logoJpg(){
+function logoJpg(maxW,q){
   try{
-    const im=document.querySelector('.logo'), c=document.createElement('canvas'), k=Math.min(1,560/im.naturalWidth);
+    const im=document.querySelector('.logo'), c=document.createElement('canvas'), k=Math.min(1,(maxW||560)/im.naturalWidth);
     c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
     const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height);
-    return {d:c.toDataURL('image/jpeg',.85),w:c.width,h:c.height};   // small JPEG keeps the PDF light for email
+    return {d:c.toDataURL('image/jpeg',q||.85),w:c.width,h:c.height};   // small JPEG keeps the PDF light for email
   }catch(e){return null}
 }
-function buildPdf(r){
+function buildPdf(r,small){
   try{
     const {jsPDF} = window.jspdf, doc = new jsPDF(), W=210;
     let y=14;
-    const lg=logoJpg();
+    const lg=small?logoJpg(260,.55):logoJpg();
     if(lg){ const w=76, h=w*lg.h/lg.w; doc.addImage(lg.d,'JPEG',(W-w)/2,y,w,h); y+=h+8; }
     doc.setFont(undefined,'bold'); doc.setFontSize(16);
     doc.text(r.type==='camp'?'Camp Registration':'Battle Registration',W/2,y,{align:'center'}); y+=5;
