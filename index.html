@@ -245,6 +245,13 @@ html.closed #mySlotBtn{display:none!important}
     <label><input type="radio" name="mode" value="spot"> On the spot</label>
     <label class="wide"><input type="radio" name="mode" value="slot"> <span>Slot booking: <b id="slotAmt">₹2,000</b> now, the rest later</span></label>
   </div>
+  <div class="hide" id="slotPayWrap">
+    <label>Pay the slot amount by <i>*</i></label>
+    <div class="opts">
+      <label><input type="radio" name="slotpay" value="online" checked> Online (UPI)</label>
+      <label><input type="radio" name="slotpay" value="cash"> Cash</label>
+    </div>
+  </div>
   <p class="no hide" id="campLock">Online payment was available only until 26 Dec. Now only On the spot payment is available.</p>
 
   <div id="onlineBox">
@@ -257,7 +264,7 @@ html.closed #mySlotBtn{display:none!important}
     <input type="file" id="shot" accept="image/*">
     <div class="err" data-e="shot"></div>
   </div>
-  <div id="spotBox" class="hide no">On the spot payment: your registration is saved as soon as you submit the form. Fees are to be paid at the camp venue.</div>
+  <div id="spotBox" class="hide no"><span id="spotTxt">On the spot payment: your registration is saved as soon as you submit the form. Fees are to be paid at the camp venue.</span></div>
 
   <button class="submit" type="submit" id="campBtn">Submit</button>
   <p class="warn"><b>Payment is non-refundable.</b></p>
@@ -359,9 +366,9 @@ const CFG = {
   campEnd:'2026-12-21',                                     // Camp registration 21 Dec tak hi
   battleEnd:'2026-12-27',                                   // Battle registration 27 Dec tak (27 Dec sirf On the spot)
   battle:{                                                  // Battle fees
-    hiphop:{label:'Hip Hop', online:799,  spot:799},
-    rys:   {label:'RYS',     online:899,  spot:899},
-    both:  {label:'Both (Hip Hop + RYS)', online:1499, spot:1699}
+    hiphop:{label:'Hip Hop', online:699,  spot:699},
+    rys:   {label:'RYS',     online:699,  spot:699},
+    both:  {label:'Both (Hip Hop + RYS)', online:1299, spot:1299}
   },
   key:'hhh6_bookings',
   maxPerPhone:3,                                            // max bookings per phone number
@@ -408,6 +415,9 @@ function pick(t){
 
 // ---- Camp price & mode ----
 function mode(){const c=document.querySelector('input[name=mode]:checked'); return c?c.value:'online'}
+function slotCash(){ if(mode()!=='slot') return false; const c=document.querySelector('input[name=slotpay]:checked'); return !!c && c.value==='cash'; }
+// Camp: screenshot is needed for Online, and for Slot booking paid online. Not for On the spot or Slot booking paid in cash.
+const campNeedsShot = () => { const m=mode(); return m==='online' || (m==='slot' && !slotCash()); };
 function campPay(){
   const m=mode(), sp=spotPrice();
   if(m==='spot') return {pay:sp,total:sp,balance:0};
@@ -415,7 +425,7 @@ function campPay(){
   const p=onlinePrice(); return {pay:p,total:p,balance:0};
 }
 function refresh(){
-  const m=mode(), c=campPay(), online=m!=='spot';
+  const m=mode(), c=campPay(), online=campNeedsShot();
   $('#amt').textContent = inr(c.pay);
   $('#slotAmt').textContent = inr(CFG.slot);
   $('#qrAmt').textContent = 'Pay ' + inr(c.pay);
@@ -425,10 +435,14 @@ function refresh(){
     : (today()<=CFG.early.until ? 'Early price, valid until 15 Dec' : 'Price increased after 15 Dec');
   $('#onlineBox').classList.toggle('hide', !online);
   $('#spotBox').classList.toggle('hide', online);
+  $('#slotPayWrap').classList.toggle('hide', m!=='slot');
+  $('#spotTxt').textContent = m==='slot'
+    ? 'Cash slot booking: your slot is saved as soon as you submit. Please pay '+inr(c.pay)+' in cash to the organiser to confirm it; the '+inr(c.balance)+' balance is paid at the camp venue.'
+    : 'On the spot payment: your registration is saved as soon as you submit the form. Fees are to be paid at the camp venue.';
   $('#campBtn').textContent = 'Submit';
   if(typeof shotC!=='undefined') shotC.recheck();
 }
-document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',refresh));
+document.querySelectorAll('input[name=mode],input[name=slotpay]').forEach(r=>r.addEventListener('change',refresh));
 
 // ---- Battle price & mode ----
 function bmode(){const c=document.querySelector('input[name=bmode]:checked'); return c?c.value:'online'}
@@ -439,7 +453,7 @@ function battlePrice(){
 function brefresh(){
   const p=battlePrice(), online=bmode()==='online';
   $('#bamt').textContent = p ? inr(p) : '₹—';
-  $('#bAmtNote').textContent = p ? (online?'Online fees':'On the spot fees') : 'Select a category first';
+  $('#bAmtNote').textContent = p ? (online?'Online fees':'On the spot fees')+' (till 30th Nov)' : 'Select a category first';
   $('#bQrAmt').textContent = p ? 'Pay '+inr(p) : '';
   $('#bOnlineBox').classList.toggle('hide', !online);
   $('#bSpotBox').classList.toggle('hide', online);
@@ -477,16 +491,16 @@ function validate(form, fields){
 function campData(){
   const f = $('#campForm'), g = n => f.elements[n].value.trim(), c = campPay();
   return {type:'camp',name:g('name'),phone:g('phone'),email:g('email'),city:g('city'),
-    mode:mode(),amount:c.pay,total:c.total,balance:c.balance};
+    mode:mode(),payVia:(mode()==='slot'?(slotCash()?'cash':'online'):''),amount:c.pay,total:c.total,balance:c.balance};
 }
 
 // Save a pending draft (not counted as a booking) once an online mode is picked and basics are filled
 ['name','phone','email','city'].forEach(n=>$('#campForm').elements[n].addEventListener('change',savePending));
-document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',savePending));
+document.querySelectorAll('input[name=mode],input[name=slotpay]').forEach(r=>r.addEventListener('change',savePending));
 function savePending(){
   if(campClosed()) return;
   const d = campData();
-  if(d.mode==='spot') return;
+  if(!campNeedsShot()) return;
   if(!(d.name && /^\d{10}$/.test(d.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))) return;
   if(checkLimits('camp',d.name,d.phone)) return;
   store.setPend({...d,status:'pending',id:newId(),time:new Date().toISOString()});
@@ -522,7 +536,7 @@ function popup(title, bodyHtml, onOk){
 
 // ---- My Slot (only on the device that made the booking) ----
 function payText(b){
-  if(b.mode==='slot') return 'Slot booking '+inr(b.amount)+' paid, '+inr(b.balance)+' balance at venue';
+  if(b.mode==='slot') return b.payVia==='cash' ? 'Slot booking '+inr(b.amount)+' by cash (pay the organiser), '+inr(b.balance)+' balance at venue' : 'Slot booking '+inr(b.amount)+' paid, '+inr(b.balance)+' balance at venue';
   if(b.mode==='spot') return 'On the spot '+inr(b.amount);
   return 'Online '+inr(b.amount);
 }
@@ -535,7 +549,7 @@ function liveText(b){
 }
 function slotLabel(b){
   const l=b.live; if(l && (+l.due||0)<=0) return 'Paid';
-  return b.mode==='spot' ? 'Booked: pay at venue' : 'Booked';
+  return (b.mode==='spot' || (b.mode==='slot' && b.payVia==='cash')) ? 'Booked: pay at venue' : 'Booked';
 }
 function showBooking(){
   const all=store.all(), p=store.pend(), pendOn=!!(p && !campClosed()), btn=$('#mySlotBtn'), box=$('#mybooking');
@@ -569,6 +583,7 @@ function resume(){
   ['name','phone','email','city'].forEach(n=>f.elements[n].value=b[n]||'');
   const r=document.querySelector('input[name=mode][value='+(b.mode==='slot'?'slot':'online')+']');
   if(r && !r.disabled) r.checked = true;
+  const sp=document.querySelector('input[name=slotpay][value=online]'); if(sp) sp.checked=true;
   refresh();
   f.scrollIntoView({behavior:'smooth'});
 }
@@ -580,10 +595,10 @@ $('#campForm').addEventListener('submit',e=>{
   let ok = validate(f,['name','phone','email']);
   const d = campData();
   if(ok){ const lim=checkLimits('camp',d.name,d.phone); if(lim){ limitPopup(lim); return; } }
-  if(d.mode!=='spot' && !shotOk(shotC,$('#shot'),d.amount)) ok=false;
+  if(campNeedsShot() && !shotOk(shotC,$('#shot'),d.amount)) ok=false;
   if(!ok){ const bad=f.querySelector('.bad,.err:not(:empty)'); if(bad) bad.scrollIntoView({block:'center',behavior:'smooth'}); return; }
   const rec = {...d, status:'booked', id:newId(), time:new Date().toISOString()};
-  if(d.mode!=='spot' && shotC.data){ rec.screenshot=shotC.data.dataUrl; rec.shotBytes=shotC.data.bytes; }
+  if(campNeedsShot() && shotC.data){ rec.screenshot=shotC.data.dataUrl; rec.shotBytes=shotC.data.bytes; }
   store.add(rec); store.clearPend();
   finish(rec);
 });
@@ -736,13 +751,13 @@ function buildPdf(r,small){
     doc.text(r.type==='camp'?'Camp Registration':'Battle Registration',W/2,y,{align:'center'}); y+=5;
     doc.setDrawColor(255,106,0); doc.setLineWidth(0.8); doc.line(20,y,190,y); y+=11;
     doc.setFontSize(11);
-    const mtxt = r.mode==='spot'?'On the spot':(r.mode==='slot'?'Slot booking (installment)':'Online');
+    const mtxt = r.mode==='spot'?'On the spot':(r.mode==='slot'?'Slot booking (installment)'+(r.payVia==='cash'?' - Cash':' - Online'):'Online');
     const rows = [['Booking ID',r.id],['Name',r.name],['Phone',r.phone],['Email',r.email],['City',r.city||'-']];
     if(r.type==='battle') rows.push(['Category',r.category]);
     rows.push(['Payment mode',mtxt]);
     if(r.mode==='slot') rows.push(['Paid now','Rs. '+r.amount],['Balance (at venue)','Rs. '+r.balance],['Total','Rs. '+r.total]);
     else rows.push(['Amount','Rs. '+r.amount]);
-    rows.push(['Status',r.mode==='spot'?'Booked (pay at venue)':(r.mode==='slot'?'Slot booked (balance at venue)':'Booked')]);
+    rows.push(['Status',r.mode==='spot'?'Booked (pay at venue)':(r.mode==='slot'?(r.payVia==='cash'?'Slot booked (cash to be paid to organiser, balance at venue)':'Slot booked (balance at venue)'):'Booked')]);
     rows.push(['Venue / Dates','Patna, Bihar | 21-27 December 2026']);
     rows.forEach(([k,v])=>{
       doc.setFont(undefined,'bold'); doc.text(k+':',20,y);
