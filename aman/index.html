@@ -137,8 +137,8 @@ main{padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(
 .bk .r1>div:first-child{min-width:0}
 .bk .r2{flex-wrap:wrap;gap:6px 16px}
 .sheet{max-height:92vh;max-height:92dvh;-webkit-overflow-scrolling:touch}
-.sheet .hd{position:sticky;top:0;z-index:3;background:var(--card);margin:-14px -14px 12px;padding:14px 14px 12px;box-shadow:0 8px 8px -8px rgba(0,0,0,.6)}
-.sheet .bid{display:inline-block;margin:4px 0 0 8px;font-size:.78rem;color:var(--mute);font-weight:600;letter-spacing:.02em;user-select:all;vertical-align:middle}
+.sheet .hd{position:sticky;top:0;z-index:3;background:var(--card);margin:-14px -14px 0;padding:14px 14px 10px}
+.sheet .hd+.kv{margin-top:0;padding-top:16px}
 .shot{width:100%;height:auto}
 @media(max-width:440px){
   .stats{grid-template-columns:1fr 1fr}
@@ -348,8 +348,8 @@ function renderSheet(fresh){
   const keep={amt:($('#fAmt')||{}).value,met:($('#fMet')||{}).value,note:($('#fNote')||{}).value,nt:($('#fNt')||{}).value,focus:document.activeElement&&document.activeElement.id};
   const pays=D.pays.filter(p=>p.bid===r.id&&p.type===r.type).sort((a,b)=>String(a.ts||a.time).localeCompare(String(b.ts||b.time)));
   sh.innerHTML =
-    '<div class="hd"><div><h3>'+esc(r.name)+'</h3><span class="badge s-'+r.st+'" style="display:inline-block;margin-top:4px;font-size:.7rem;font-weight:800;padding:3px 9px;border-radius:30px;background:var(--card2)">'+LBL[r.st]+'</span><span class="bid">'+esc(r.id)+'</span></div><button class="ib" id="shClose">✕</button></div>'
-    +'<div class="kv"><span>Phone</span><b><a href="tel:'+esc(r.phone)+'">'+esc(r.phone)+'</a> · <a href="https://wa.me/91'+esc(r.phone)+'" target="_blank" rel="noopener">WhatsApp</a></b>'
+    '<div class="hd"><div><h3>'+esc(r.name)+'</h3><span class="badge s-'+r.st+'" style="display:inline-block;margin-top:4px;font-size:.7rem;font-weight:800;padding:3px 9px;border-radius:30px;background:var(--card2)">'+LBL[r.st]+'</span></div><button class="ib" id="shClose">✕</button></div>'
+    +'<div class="kv"><span>ID</span><b>'+esc(r.id)+'</b><span>Phone</span><b><a href="tel:'+esc(r.phone)+'">'+esc(r.phone)+'</a> · <a href="https://wa.me/91'+esc(r.phone)+'" target="_blank" rel="noopener">WhatsApp</a></b>'
     +'<span>Email</span><b>'+esc(r.email)+'</b><span>City</span><b>'+esc(r.city||'-')+'</b>'
     +(r.category?'<span>Category</span><b>'+esc(r.category)+'</b>':'')
     +'<span>Type</span><b>'+(r.type==='camp'?'Camp':'Battle')+' · '+MODE[r.mode]+'</b><span>Registered</span><b>'+fmt(r.ts)+'</b></div>'
