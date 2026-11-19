@@ -365,11 +365,11 @@ const CFG = {
   battleOnlineUntil:'2026-12-26',                           // Battle online payment 26 Dec tak (27 Dec ko sirf On the spot)
   campEnd:'2026-12-21',                                     // Camp registration 21 Dec tak hi
   battleEnd:'2026-12-27',                                   // Battle registration 27 Dec tak (27 Dec sirf On the spot)
-  battleEarlyUntil:'2026-11-30',                            // Battle: 30 Nov tak early price, 1 Dec se automatic late price
-  battle:{                                                  // Battle fees (online & on the spot same): early = 30 Nov tak, late = uske baad
-    hiphop:{label:'Hip Hop', early:699,  late:899},
-    rys:   {label:'RYS',     early:699,  late:899},
-    both:  {label:'Both (Hip Hop + RYS)', early:1299, late:1599}
+  battleOnlineLabelUntil:'2026-11-30',                      // Battle Online: "(till 30th Nov)" label sirf is date tak dikhega (price nahi badlega)
+  battle:{                                                  // Battle fees: Online aur On the spot ke alag price
+    hiphop:{label:'Hip Hop', online:699,  spot:899},
+    rys:   {label:'RYS',     online:699,  spot:899},
+    both:  {label:'Both (Hip Hop + RYS)', online:1299, spot:1599}
   },
   key:'hhh6_bookings',
   maxPerPhone:3,                                            // max bookings per phone number
@@ -433,7 +433,7 @@ function refresh(){
   $('#amtNote').textContent =
     m==='spot' ? (today()<=CFG.spot.until ? 'On the spot fees ('+inr(CFG.spot.after)+' after 15 Dec)' : 'On the spot fees')
     : m==='slot' ? 'Slot booking now, '+inr(c.balance)+' balance at the camp venue'
-    : (today()<=CFG.early.until ? 'Early price, valid until 15 Dec' : 'Price increased after 15 Dec');
+    : (today()<=CFG.early.until ? 'Early price, till 30th Nov' : 'Price increased after 15 Dec');
   $('#onlineBox').classList.toggle('hide', !online);
   $('#spotBox').classList.toggle('hide', online);
   $('#slotPayWrap').classList.toggle('hide', m!=='slot');
@@ -449,12 +449,12 @@ document.querySelectorAll('input[name=mode],input[name=slotpay]').forEach(r=>r.a
 function bmode(){const c=document.querySelector('input[name=bmode]:checked'); return c?c.value:'online'}
 function battlePrice(){
   const k=$('#b_cat').value; if(!k||!CFG.battle[k]) return 0;
-  return today()<=CFG.battleEarlyUntil ? CFG.battle[k].early : CFG.battle[k].late;
+  return CFG.battle[k][bmode()==='spot'?'spot':'online'];
 }
 function brefresh(){
   const p=battlePrice(), online=bmode()==='online';
   $('#bamt').textContent = p ? inr(p) : '₹—';
-  $('#bAmtNote').textContent = p ? (online?'Online fees':'On the spot fees')+(today()<=CFG.battleEarlyUntil?' (till 30th Nov)':'') : 'Select a category first';
+  $('#bAmtNote').textContent = p ? (online?'Online fees'+(today()<=CFG.battleOnlineLabelUntil?' (till 30th Nov)':''):'On the spot fees') : 'Select a category first';
   $('#bQrAmt').textContent = p ? 'Pay '+inr(p) : '';
   $('#bOnlineBox').classList.toggle('hide', !online);
   $('#bSpotBox').classList.toggle('hide', online);
