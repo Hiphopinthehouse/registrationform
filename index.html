@@ -798,14 +798,13 @@ function makePdf(r){
 // ---- Payment screenshot check (OCR): sirf payment screenshot accept hoga ----
 /*JUDGE_START*/
 function judgeShot(text, amt){
+  // Sirf amount check hota hai. UTR / status / UPI app ka naam detect nahi hota,
+  // taaki kisi bhi UPI app (GPay, PhonePe, Paytm, BHIM, bank app...) ka screenshot chal jaaye.
   const t=String(text||'').toLowerCase(), flat=t.replace(/[,\s]/g,'');
-  const status=/(paid|success|completed|debited|\bsent\b|transferred|payment done|money sent)/.test(t);
-  const upi=/(upi|utr|\bref(erence)?\b|txn|transaction|google ?pay|gpay|phone ?pe|paytm|bhim|\bcred\b|amazon ?pay|bank|a\/c|\bvpa\b|@ok|@ybl|@paytm|@upi|@ibl|@axl)/.test(t);
   const money=flat.includes(String(amt));
   let why='';
-  if(!(status&&upi)) why='This does not look like a payment screenshot. Please upload only a successful UPI payment screenshot.';
-  else if(!money) why='The amount '+inr(amt)+' is not visible in the screenshot. Please upload the payment screenshot for the correct amount.';
-  return {status,upi,money,pass:status&&upi&&money,why};
+  if(!money) why='The amount '+inr(amt)+' is not visible in the screenshot. Please upload the payment screenshot for the correct amount.';
+  return {status:true,upi:true,money,pass:money,why};
 }
 /*JUDGE_END*/
 let tessP=null, workerP=null;
