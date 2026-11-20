@@ -836,8 +836,19 @@ function prepShot(file){
       const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(im,0,0,c.width,c.height);
       const d=x.getImageData(0,0,c.width,c.height), px=d.data; let sum=0;
       for(let i=0;i<px.length;i+=4){const g=px[i]*.299+px[i+1]*.587+px[i+2]*.114; px[i]=px[i+1]=px[i+2]=g; sum+=g}
-      if(sum/(px.length/4)<115) for(let i=0;i<px.length;i+=4){px[i]=px[i+1]=px[i+2]=255-px[i]}   // dark mode screenshots
-      x.putImageData(d,0,0); URL.revokeObjectURL(url); res(c);
+      const dark = sum/(px.length/4)<115;   // dark mode / dark themed screenshots (Paytm green, PhonePe purple etc.)
+      const mk=fn=>{ const c2=document.createElement('canvas'); c2.width=c.width; c2.height=c.height;
+        const x2=c2.getContext('2d'), d2=x2.createImageData(c.width,c.height), p2=d2.data;
+        for(let i=0;i<px.length;i+=4){ const g=fn(px[i]); p2[i]=p2[i+1]=p2[i+2]=g; p2[i+3]=255 }
+        x2.putImageData(d2,0,0); return c2 };
+      URL.revokeObjectURL(url);
+      // multiple versions of the same screenshot, OCR tries them one by one until the amount is found
+      res([
+        {c:mk(g=>dark?255-g:g), psm:'3'},     // normal
+        {c:mk(g=>g>185?0:255),  psm:'11'},    // white / bright text on coloured or dark background (big amount)
+        {c:mk(g=>dark?g:255-g), psm:'3'},     // opposite polarity
+        {c:mk(g=>g<100?0:255),  psm:'11'}     // dark text on light background
+      ]);
     };
     im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'))};
     im.src=url;
@@ -883,13 +894,19 @@ function makeShot(inp, errEl, getAmt){
       let text;
       if(S.cache && S.cache.file===file) text=S.cache.text;
       else{
-        const canvas=await prepShot(file);
+        const variants=await prepShot(file);
         if(tok!==S.tok) return;
         progCb=m=>{ if(tok===S.tok && S.busy && m.status==='recognizing text') S.msg('Reading screenshot… '+Math.round((m.progress||0)*100)+'%','info') };
         const worker=await Promise.race([getWorker(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),45000))]);
-        const out=await worker.recognize(canvas);
-        if(tok!==S.tok) return;
-        text=out&&out.data&&out.data.text; S.cache={file:file,text:text};
+        text='';
+        for(const v of variants){
+          await worker.setParameters({tessedit_pageseg_mode:v.psm});
+          const out=await worker.recognize(v.c);
+          if(tok!==S.tok) return;
+          text+='\n'+((out&&out.data&&out.data.text)||'');
+          if(judgeShot(text, amt).money) break;     // amount mil gaya, aage ke passes ki zarurat nahi
+        }
+        S.cache={file:file,text:text};
       }
       const r=judgeShot(text, amt);
       if(r.pass){
